@@ -62,20 +62,20 @@ steps:
 # =========================
 # NOTIFY WEBHOOK (optional)
 # =========================
-- name: curlimages/curl
-  id: Notify webhook
-  entrypoint: sh
-  args:
-    - -c
-    - |
-      curl -X POST "http://34.52.180.62:8080" \
-      -H "Content-Type: application/json" \
-      -d "{
-        \"project\": \"$PROJECT_ID\",
-        \"build\": \"$BUILD_ID\",
-        \"status\": \"SUCCESS\",
-        \"image\": \"$SHORT_SHA\"
-      }"
+# - name: curlimages/curl
+#   id: Notify webhook
+#   entrypoint: sh
+#   args:
+#     - -c
+#     - |
+#       curl -X POST "http://34.52.180.62:8080" \
+#       -H "Content-Type: application/json" \
+#       -d "{
+#         \"project\": \"$PROJECT_ID\",
+#         \"build\": \"$BUILD_ID\",
+#         \"status\": \"SUCCESS\",
+#         \"image\": \"$SHORT_SHA\"
+#       }"
 
 images:
   - europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_IMAGE:$SHORT_SHA
