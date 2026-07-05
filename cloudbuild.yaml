@@ -35,7 +35,7 @@ steps:
   args:
     - -X
     - POST
-    - $_WEBHOOK_URL
+    - 34.52.180.62
     - -H
     - Content-Type: application/json
     - -d
