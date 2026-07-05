@@ -21,5 +21,6 @@ spec:
         "projectId": "{{.Build.ProjectId}}",
         "status": "{{.Build.Status}}",
         "triggerId": "{{.Build.BuildTriggerId}}",
-        "image": "{{(index .Build.Images 0)}}"
+        "image": "{{(index .Build.Images 0)}}",
+        "logUrl": "{{.Build.LogUrl}}"
       }
