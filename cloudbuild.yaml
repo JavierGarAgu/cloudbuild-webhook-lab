@@ -1,6 +1,6 @@
 steps:
 
-# Build Docker image
+# Build image
 - name: gcr.io/cloud-builders/docker
   args:
     - build
@@ -14,6 +14,7 @@ steps:
     - push
     - europe-west1-docker.pkg.dev/$PROJECT_ID/cloudbuild-images/webhook:$SHORT_SHA
 
+# Get GKE credentials
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   entrypoint: gcloud
   args:
@@ -23,28 +24,13 @@ steps:
     - $_CLUSTER
     - --zone=$_ZONE
 
-# Deploy to Cloud Run (en nuestro lab; en el examen sería GKE)
+# Deploy to GKE
 - name: gcr.io/cloud-builders/gke-deploy
   args:
     - run
+    - --filename=k8s.yaml
     - --cluster=$_CLUSTER
     - --location=$_ZONE
 
-- name: curlimages/curl
-  entrypoint: curl
-  args:
-    - -X
-    - POST
-    - 34.52.180.62
-    - -H
-    - Content-Type: application/json
-    - -d
-    - |
-      {
-        "project":"$PROJECT_ID",
-        "build":"$BUILD_ID",
-        "status":"SUCCESS",
-        "image":"$SHORT_SHA"
-      }
 images:
   - europe-west1-docker.pkg.dev/$PROJECT_ID/cloudbuild-images/webhook:$SHORT_SHA
