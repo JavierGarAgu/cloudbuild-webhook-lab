@@ -1,20 +1,42 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: "europe-west1"
+  _REPOSITORY: "cloudbuild-images"
+  _IMAGE: "webhook"
+  _CLUSTER: "cloudbuild-webhook-lab"
+  _ZONE: "europe-west1-b"
+  _NAMESPACE: "production"
+  _WEBHOOK_URL: ""   # si no lo inyectas desde trigger, déjalo vacío o quítalo
+
 steps:
 
-# Build Docker image
+# =========================
+# BUILD IMAGE
+# =========================
 - name: gcr.io/cloud-builders/docker
+  id: Build image
   args:
     - build
     - -t
-    - europe-west1-docker.pkg.dev/$PROJECT_ID/cloudbuild-images/webhook:$SHORT_SHA
+    - europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_IMAGE:$SHORT_SHA
     - ./webhook
 
-# Push image
+# =========================
+# PUSH IMAGE
+# =========================
 - name: gcr.io/cloud-builders/docker
+  id: Push image
   args:
     - push
-    - europe-west1-docker.pkg.dev/$PROJECT_ID/cloudbuild-images/webhook:$SHORT_SHA
+    - europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_IMAGE:$SHORT_SHA
 
+# =========================
+# GET GKE CREDENTIALS
+# =========================
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  id: Get cluster credentials
   entrypoint: gcloud
   args:
     - container
@@ -22,29 +44,41 @@ steps:
     - get-credentials
     - $_CLUSTER
     - --zone=$_ZONE
+    - --project=$PROJECT_ID
 
-# Deploy to Cloud Run (en nuestro lab; en el examen sería GKE)
-- name: gcr.io/cloud-builders/gke-deploy
+# =========================
+# DEPLOY TO GKE
+# =========================
+- name: gcr.io/cloud-builders/kubectl
+  id: Deploy to GKE
   args:
-    - run
-    - --cluster=$_CLUSTER
-    - --location=$_ZONE
+    - apply
+    - -f
+    - k8s/
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=$_ZONE"
+    - "CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER"
 
+# =========================
+# NOTIFY WEBHOOK (optional)
+# =========================
 - name: curlimages/curl
+  id: Notify webhook
   entrypoint: curl
   args:
     - -X
     - POST
     - $_WEBHOOK_URL
     - -H
-    - Content-Type: application/json
+    - "Content-Type: application/json"
     - -d
     - |
       {
-        "project":"$PROJECT_ID",
-        "build":"$BUILD_ID",
-        "status":"SUCCESS",
-        "image":"$SHORT_SHA"
+        "project": "$PROJECT_ID",
+        "build": "$BUILD_ID",
+        "status": "SUCCESS",
+        "image": "$SHORT_SHA"
       }
+
 images:
-  - europe-west1-docker.pkg.dev/$PROJECT_ID/cloudbuild-images/webhook:$SHORT_SHA
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_IMAGE:$SHORT_SHA

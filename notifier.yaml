@@ -1,0 +1,26 @@
+apiVersion: cloud-build-notifiers/v1
+kind: HTTPNotifier
+
+metadata:
+  name: build-webhook
+
+spec:
+  notification:
+    filter: build.status == Build.Status.SUCCESS
+
+    delivery:
+      url: http://34.52.180.62:8080
+      method: POST
+      headers:
+        Content-Type: application/json
+
+  template:
+    body: |
+      {
+        "buildId": "{{.Build.Id}}",
+        "projectId": "{{.Build.ProjectId}}",
+        "status": "{{.Build.Status}}",
+        "triggerId": "{{.Build.BuildTriggerId}}",
+        "image": "{{(index .Build.Images 0)}}",
+        "logUrl": "{{.Build.LogUrl}}"
+      }
